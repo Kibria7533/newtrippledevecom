@@ -14,7 +14,7 @@ app.use(bp.json());
 app.use(cor());
 app.use(require("./routes/users"));
 app.use(require("./routes/product"));
-
+app.use(require("./routes/menu"));
 var db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error"));
 db.once("open", () => {
