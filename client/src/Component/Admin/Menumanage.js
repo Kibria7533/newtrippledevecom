@@ -11,6 +11,9 @@ export default class Menumanage extends Component {
       megamenuholder: "",
       submegamenu: "",
       subdropdownmenu: "",
+      selecteddropdwnholder: "",
+      selectedmegadwnholder: "",
+      menus: [],
     };
   }
   onchange = (data) => {
@@ -31,6 +34,7 @@ export default class Menumanage extends Component {
       )
       .then((data) => {
         alert("Menu aded");
+        this.componentDidMount();
       });
   };
 
@@ -49,15 +53,21 @@ export default class Menumanage extends Component {
       )
       .then((data) => {
         alert("dropdownmenu holder aded");
+        this.componentDidMount();
       });
   };
 
+  getmenus = async () => {
+    await axios.get(`${URL}/getmenus`).then((data) => {
+      this.setState({ menus: data.data });
+    });
+  };
   megamenuholdersub = async () => {
     const { megamenuholder } = this.state;
     await axios
       .post(
         `${URL}/savemenu`,
-        { type: "dropdownmenuholder", category: megamenuholder },
+        { type: "megamenuholder", category: megamenuholder },
         {
           headers: {
             "Content-Type": "application/json",
@@ -67,8 +77,37 @@ export default class Menumanage extends Component {
       )
       .then((data) => {
         alert("Megamenu holder aded");
+        this.componentDidMount();
       });
   };
+  selectdropdownholder = (e) => {
+    this.setState({ selecteddropdwnholder: e.target.value });
+  };
+  selectmegaholder = (e) => {
+    this.setState({ selectedmegadwnholder: e.target.value });
+  };
+
+  addsubdropdwn = async () => {
+    const { selecteddropdwnholder, subdropdownmenu } = this.state;
+
+    await axios
+      .post(
+        `${URL}/addsubdrop`,
+        { selecteddropdwnholder, subdropdownmenu },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      )
+      .then((data) => {
+        console.log(data);
+      });
+  };
+  componentDidMount() {
+    this.getmenus();
+  }
   render() {
     return (
       <div className="container-fluid">
@@ -110,22 +149,52 @@ export default class Menumanage extends Component {
         <div className="form-row">
           <div className="form-group col-md-6">
             <label>Select dropdownholder</label>
-            <select>
-              <option>gfgf</option>
-              <option>gfgf</option>
+            <select onChange={this.selectdropdownholder}>
+              <option value="0"> Please select dropdownholder</option>
+              {this.state.menus.map((item, index) => {
+                if (item.Type == "dropdownmenuholder") {
+                  return (
+                    <option key={index} value={item.CategoryName}>
+                      {item.CategoryName}
+                    </option>
+                  );
+                }
+              })}
             </select>
             <br></br>
-            <input type="text" placeholder="enter sub dropdown menu"></input>
-            <button type="button">Add</button>
+            <input
+              type="text"
+              onChange={this.onchange}
+              name="subdropdownmenu"
+              value={this.state.subdropdownmenu}
+              placeholder="enter sub dropdown menu"
+            ></input>
+            <button type="button" onClick={this.addsubdropdwn}>
+              Add
+            </button>
           </div>
           <div className="form-group col-md-6">
             <label>Select Megamenu Holder</label>
-            <select>
-              <option>gfgf</option>
-              <option>gfgf</option>
+            <select onChange={this.selectmegaholder}>
+              <option value="0"> Please select Megaholder</option>
+              {this.state.menus.map((item, index) => {
+                if (item.Type == "megamenuholder") {
+                  return (
+                    <option key={index} value={item.CategoryName}>
+                      {item.CategoryName}
+                    </option>
+                  );
+                }
+              })}
             </select>
             <br></br>
-            <input type="text" placeholder="Enter submegamenu"></input>
+            <input
+              type="text"
+              name="submegamenu"
+              onChange={this.onchange}
+              value={this.state.submegamenu}
+              placeholder="Enter submegamenu"
+            ></input>
             <button type="button">Add</button>
           </div>
         </div>
