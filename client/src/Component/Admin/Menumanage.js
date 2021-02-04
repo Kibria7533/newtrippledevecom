@@ -2,6 +2,11 @@ import axios from "axios";
 import React, { Component } from "react";
 import URL from "../User/Url";
 import "./Menutemplate.css";
+import FlatList from "flatlist-react";
+import { confirmAlert } from "react-confirm-alert"; // Import
+import "react-confirm-alert/src/react-confirm-alert.css"; // Import css
+import Modal from "react-modal";
+
 export default class Menumanage extends Component {
   constructor() {
     super();
@@ -13,9 +18,33 @@ export default class Menumanage extends Component {
       subdropdownmenu: "",
       selecteddropdwnholder: "",
       selectedmegadwnholder: "",
+
+      modalIsOpen: false,
       menus: [],
+      oldsubcategory: "",
+      editableubdrop: "",
     };
   }
+  alertsubmit = (id) => {
+    confirmAlert({
+      title: "Confirm to submit",
+      message: "Are you sure to do this.",
+      buttons: [
+        {
+          label: "Yes",
+          onClick: async () => {
+            await axios.get(`${URL}/deletecategory/${id}`).then((data) => {
+              console.log(data);
+              this.componentDidMount();
+            });
+          },
+        },
+        {
+          label: "No",
+        },
+      ],
+    });
+  };
   onchange = (data) => {
     this.setState({ [data.target.name]: data.target.value });
   };
@@ -102,15 +131,98 @@ export default class Menumanage extends Component {
         }
       )
       .then((data) => {
-        console.log(data);
+        this.setState({ subdropdownmenu: "" });
+        this.componentDidMount();
       });
   };
+  deletesubcategory = async (subcategory) => {
+    await axios
+      .post(
+        `${URL}/deletesubcategory`,
+        { subcategory },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      )
+      .then((data) => {
+        if (data.data.success) this.componentDidMount();
+      });
+  };
+  renderPerson = (person, idx) => {
+    return (
+      <li key={idx} className="list-unstyled mt-2 mb-2">
+        <b>{person.Name} </b>
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          onClick={() => this.subcategoryedit(person.Name)}
+        >
+          <i className="fa fa-edit" style={{ fontSize: "16px" }}></i>
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm ml-2"
+          onClick={() => this.deletesubcategory(person.Name)}
+        >
+          <i className="fa fa-close" style={{ fontSize: "16px" }}></i>
+        </button>
+      </li>
+    );
+  };
+  closeModal = () => {
+    this.setState({ modalIsOpen: false });
+  };
+
   componentDidMount() {
     this.getmenus();
   }
+  subcategoryedit = (subcategory) => {
+    this.setState({
+      oldsubcategory: subcategory,
+      editableubdrop: subcategory,
+      modalIsOpen: true,
+    });
+  };
+  editsubdropdwn = async () => {
+    const { oldsubcategory, editableubdrop } = this.state;
+    await axios
+      .post(
+        `${URL}/editsubdrop`,
+        { oldsubcategory, editableubdrop },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      )
+      .then((data) => {
+        if (data.data.success) this.setState({ modalIsOpen: false });
+        this.componentDidMount();
+      });
+  };
   render() {
     return (
       <div className="container-fluid">
+        <Modal
+          isOpen={this.state.modalIsOpen}
+          onRequestClose={this.closeModal}
+          contentLabel="Example Modal"
+        >
+          <input
+            type="text"
+            onChange={this.onchange}
+            name="editableubdrop"
+            value={this.state.editableubdrop}
+            placeholder="enter sub dropdown menu"
+          ></input>
+          <button type="button" onClick={this.editsubdropdwn}>
+            Add
+          </button>
+        </Modal>
         <div className="form-row ">
           <div className="form-group col-md-4">
             <input
@@ -198,6 +310,55 @@ export default class Menumanage extends Component {
             <button type="button">Add</button>
           </div>
         </div>
+        <div className="d-flex justify-content-center">
+          <h2>All Drop Menus</h2>
+        </div>
+        {this.state.menus.map((item, index) => {
+          if (item.Type === "dropdownmenuholder") {
+            return (
+              <div key={index}>
+                <div className="d-flex justify-content-center my-4">
+                  <button type="button" className="btn btn-primary btn-lg">
+                    {item.CategoryName}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() =>
+                      this.categoryedit(item.CategoryName, "category")
+                    }
+                  >
+                    <i className="fa fa-edit" style={{ fontSize: "16px" }}></i>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm ml-2"
+                    onClick={() => this.alertsubmit(item._id)}
+                  >
+                    <i className="fa fa-close" style={{ fontSize: "16px" }}></i>
+                  </button>
+                </div>
+
+                <div className="row">
+                  <FlatList
+                    list={item.SubCategory}
+                    renderItem={this.renderPerson}
+                    renderWhenEmpty={() => (
+                      <div className="d-flex justify-content-center my-4">
+                        You didn't add any sub category yet
+                      </div>
+                    )}
+                    display={{
+                      grid: true,
+                      minColumnWidth: "5px",
+                      gridGap: "10px",
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          }
+        })}
       </div>
     );
   }

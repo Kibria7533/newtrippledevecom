@@ -39,5 +39,37 @@ router.post("/addsubdrop", async (req, res) => {
     res.send(data);
   }
 });
+router.post("/deletesubcategory", async (req, res) => {
+  const { subcategory } = req.body;
+  const data = await Menus.updateOne(
+    { "SubCategory.Name": subcategory },
+    { $pull: { SubCategory: { Name: subcategory } } }
+  );
 
+  if (data) {
+    res.json({ success: true });
+  }
+});
+
+router.get("/deletecategory/:id", async (req, res) => {
+  const data = await Menus.findByIdAndRemove({ _id: req.params.id });
+  if (data) {
+    res.send({ success: true });
+  }
+});
+
+router.post("/editsubdrop", async (req, res) => {
+  const { oldsubcategory, editableubdrop } = req.body;
+  const data = await Menus.updateOne(
+    { "SubCategory.Name": oldsubcategory },
+    {
+      $set: {
+        "SubCategory.$": { Name: editableubdrop },
+      },
+    }
+  );
+  if (data) {
+    res.json({ success: true });
+  }
+});
 module.exports = router;
